@@ -55,8 +55,9 @@ if __name__ == "__main__":
 	config = configparser.ConfigParser()
 	if os.path.isfile(config_file):
 		username = config['user']['username']
-
-	ip = None
+	else:
+		username = os.getlogin()
+	ip = Nones
 	while ip is None:
 		print(f"\nCurrently using username: {username}\n")
 

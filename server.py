@@ -50,7 +50,7 @@ def setup(ip: str, port: int, mode="nogui") -> socket.socket:
 
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
-    server: socket.socket = setup("0.0.0.0", 7754)
+    server: socket.socket = setup("127.0.0.1", 7754)
     loop.run_until_complete(await_connections(server))
 
     print("finish")

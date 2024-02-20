@@ -27,13 +27,12 @@ class User:
 
 
 def pre_connect(config: configparser.ConfigParser, _config_file: str):
-
-	if os.path.exists(_config_file):
-		config.read(_config_file)
+	config.read(_config_file)
+	if os.path.exists(_config_file) and "connection.details" in config.sections():
 		return config['connection.details']['ip_address'], config['connection.details']['port']
 	_ip, _port = choice.Input("IP address to connect to").ask(), choice.Input("Port of the address", int).ask()
 	config['connection.details'] = {'ip_address': _ip, 'port': _port}
-	with open(_config_file, "w") as file:
+	with open(_config_file, "a") as file:
 		config.write(file)
 	return _ip, _port
 
@@ -53,12 +52,13 @@ if __name__ == "__main__":
 	choices: list = ["Connect to server", "Change username"]
 	config_file = "config.cfg"
 	config = configparser.ConfigParser()
-	if os.path.isfile(config_file):
+	config.read(config_file)
+	if os.path.isfile(config_file) and "user" in config.sections():
 		username = config['user']['username']
 	else:
 		username = os.getlogin()
-	ip = Nones
-	while ip is None:
+	ip, port = None, None
+	while ip is None and port is None:
 		print(f"\nCurrently using username: {username}\n")
 
 		match choice.Menu(choices, title="Action menu:").ask():
@@ -66,6 +66,9 @@ if __name__ == "__main__":
 				ip, port = pre_connect(config, config_file)
 
 			case "Change username":
-				username = choice.Input("New username").ask()
+				username = choice.Input("New username (limit 12 char)").ask()[:12].replace(" ", "_")
+				config['user'] = {'username': username}
+				with open(config_file, "w") as file:
+					config.write(file)
 	client: User = User(connect(ip, int(port)), _username=username)
 	client.handle_login()

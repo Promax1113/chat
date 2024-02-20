@@ -32,7 +32,7 @@ def pre_connect(config: configparser.ConfigParser, _config_file: str):
 		return config['connection.details']['ip_address'], config['connection.details']['port']
 	_ip, _port = choice.Input("IP address to connect to").ask(), choice.Input("Port of the address", int).ask()
 	config['connection.details'] = {'ip_address': _ip, 'port': _port}
-	with open(_config_file, "a") as file:
+	with open(_config_file, "w") as file:
 		config.write(file)
 	return _ip, _port
 

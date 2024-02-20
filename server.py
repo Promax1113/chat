@@ -10,7 +10,7 @@ logger.addHandler(ch)
 
 
 # Make it async
-async def handle_client(self: socket.socket):
+async def handle_client(client: socket.socket):
     print(await loop.sock_recv(client, 4096))
 
 
@@ -18,7 +18,7 @@ async def await_connections(server: socket.socket):
     while True:
         client, addr = await loop.sock_accept(server)
         print(f"Incoming connection from {addr}")
-        logger.info(f"Now handling self {addr[0]} on port {addr[1]}...")
+        logger.info(f"Now handling client {addr[0]} on port {addr[1]}...")
         asyncio.create_task(handle_client(client))
 
 
@@ -40,7 +40,7 @@ def setup(ip: str, port: int, mode="nogui") -> socket.socket:
             # Setup PyQt GUI
             pass
 
-        print("Server started!")
+        print(f"Server started! Listening on {ip}:{port}...")
         return server
 
     else:

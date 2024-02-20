@@ -1,6 +1,8 @@
+import os
 import socket
 import logging
-import choices
+import choice
+import configparser
 
 logger = logging.getLogger('client-info')
 logger.setLevel(logging.INFO)
@@ -9,13 +11,27 @@ ch.setLevel(logging.INFO)
 logger.addHandler(ch)
 
 
-def pre_login(client: socket.socket):
+class User:
+	username: str
+	sock: socket.socket
+
+	def __init__(self, _socket, _username=os.getlogin(), password_hash=None):
+		self.sock = _socket
+		self.username = _username
+
+	def __pre_login(self):
+		pass
+
+	def handle_login(self):
+		self.pre_login()
 
 
-
-def handle_login(client: socket.socket):
-	pre_login(client)
-
+def pre_connect():
+	if os.path.isfile(config_file):
+		config = configparser.ConfigParser()
+		config.read(config_file)
+		return ["connection.details"]["IpAddress"], config["connection.details"]["Port"]
+	return  choice.input("IP address to connect to: "), choice.input("Port of the address: ")
 
 # add connection retries.
 def connect(ip, port, mode="nogui") -> socket.socket:
@@ -29,5 +45,13 @@ def connect(ip, port, mode="nogui") -> socket.socket:
 
 
 if __name__ == "__main__":
-	client: socket.socket = connect("127.0.0.1", 7754)
-	handle_login(client)
+	print(f"Currently using username: {os.getlogin()}")
+	choices: list = ["Connect to server", "Change username"]
+	config_file = "config.cfg"
+
+	match choice.Menu(choices, title="Action menu:").ask():
+		case "Connect to server":
+			ip, port = pre_connect()
+
+	client: User = User(connect(ip, port))
+	client.handle_login(client)

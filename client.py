@@ -49,7 +49,7 @@ def connect(ip, port, mode="nogui") -> socket.socket:
 
 
 if __name__ == "__main__":
-	choices: list = ["Connect to server", "Change username"]
+	choices: list = ["Connect to server", "Change username", "Change saved IP Address"]
 	config_file = "config.cfg"
 	config = configparser.ConfigParser()
 	config.read(config_file)
@@ -70,5 +70,11 @@ if __name__ == "__main__":
 				config['user'] = {'username': username}
 				with open(config_file, "w") as file:
 					config.write(file)
+			case "Change saved IP Address":
+				logger.info("Removing entry...")
+				config.remove_section("connection.details")
+				with open(config_file, "w") as f:
+					config.write(f)
+				ip, port = pre_connect(config, config_file)
 	client: User = User(connect(ip, int(port)), _username=username)
 	client.handle_login()

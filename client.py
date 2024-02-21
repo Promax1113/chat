@@ -50,7 +50,7 @@ def connect(ip, port, mode="nogui") -> socket.socket:
 
 if __name__ == "__main__":
 	choices: list = ["Connect to server", "Change username", "Change saved IP Address"]
-	config_file = "config.cfg"
+	config_file = "cconfig.cfg"
 	config = configparser.ConfigParser()
 	config.read(config_file)
 	if os.path.isfile(config_file) and "user" in config.sections():

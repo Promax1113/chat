@@ -1,6 +1,13 @@
+import json
 import socket
 import asyncio
 import logging
+import configparser
+import base64
+import hashlib
+from typing import Final
+
+BUFSIZE: Final[int] = 4096
 
 logger = logging.getLogger('server-info')
 logger.setLevel(logging.INFO)
@@ -9,9 +16,22 @@ ch.setLevel(logging.INFO)
 logger.addHandler(ch)
 
 
+class Client:
+    sock: socket.socket
+    address: socket.AddressInfo
+
+    def __init__(self, _socket: socket.socket):
+        self.sock = _socket
+        self.address = self.sock.getpeername()
+
+    async def receive(self, decode: bool = True) -> bytes | str:
+        message = await loop.sock_recv(self.sock, BUFSIZE)
+        return message.decode() if decode else message
+
+
 # Make it async
-async def handle_client(client: socket.socket):
-    print(await loop.sock_recv(client, 4096))
+async def handle_client(client: Client):
+    client_info = json.loads(await client.receive())
 
 
 async def await_connections(server: socket.socket):
@@ -19,7 +39,7 @@ async def await_connections(server: socket.socket):
         client, addr = await loop.sock_accept(server)
         print(f"Incoming connection from {addr}")
         logger.info(f"Now handling client {addr[0]} on port {addr[1]}...")
-        asyncio.create_task(handle_client(client))
+        await asyncio.create_task(handle_client(Client(client)))
 
 
 def setup(ip: str, port: int, mode="nogui") -> socket.socket:
@@ -49,6 +69,7 @@ def setup(ip: str, port: int, mode="nogui") -> socket.socket:
 
 
 if __name__ == "__main__":
+    config = configparser.ConfigParser()
     loop = asyncio.new_event_loop()
     server: socket.socket = setup("127.0.0.1", 7754)
     loop.run_until_complete(await_connections(server))

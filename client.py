@@ -26,7 +26,7 @@ class User:
 
     def __pre_login(self):
         client_data = {"username": self.username,
-                       "key_hash": hashlib.sha256(choice.Input("Enter the password for the server connection (max 20 char)").ask()).hexdigest()}
+                       "key_hash": hashlib.sha256(choice.Input("Enter the password for the server connection (max 20 char)").ask().encode()).hexdigest()}
 
         self.send(json.dumps(client_data).encode())
 
@@ -37,7 +37,8 @@ class User:
         return message.decode() if decode else message
     
     def send(self, message):
-        message = message if type(message) == bytes | bytearray else message.encode()
+        print(type(message))
+        message = message if type(message) == bytes else message.encode()
         self.sock.sendall(message)
 
     def handle_login(self):

@@ -27,10 +27,13 @@ class Client:
     async def receive(self, decode: bool = True) -> bytes | str:
         message = await loop.sock_recv(self.sock, BUFSIZE)
         return message.decode() if decode else message
-
-
+    
+    async def send(self, message):
+        message = message if type(message) == bytes | bytearray else message.encode()
+        await loop.sock_sendall(self.sock, message)
 # Make it async
 async def handle_client(client: Client):
+    # Is already returned decoded!!
     client_info = json.loads(await client.receive())
 
 

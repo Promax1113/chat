@@ -4,6 +4,8 @@ import logging
 import choice
 import configparser
 from typing import Final
+import hashlib
+import json
 
 BUFSIZE: Final[int] = 4096
 
@@ -24,11 +26,19 @@ class User:
 
     def __pre_login(self):
         client_data = {"username": self.username,
-                       "key_hash": choice.Input("Enter the password for the server connection (max 20 char)").ask()}
-        
+                       "key_hash": hashlib.sha256(choice.Input("Enter the password for the server connection (max 20 char)").ask()).hexdigest()}
+
+        self.send(json.dumps(client_data).encode())
+
     def receive(self, decode: bool = True):
-        message = self.sock.recv(BUFSIZE)
+        message = None
+        while message == None:
+            self.sock.recv(BUFSIZE)
         return message.decode() if decode else message
+    
+    def send(self, message):
+        message = message if type(message) == bytes | bytearray else message.encode()
+        self.sock.sendall(message)
 
     def handle_login(self):
         self.__pre_login()

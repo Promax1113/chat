@@ -90,12 +90,13 @@ if __name__ == "__main__":
     if os.path.isfile(config_file) and "user" in config.sections():
         username = config['user']['username']
         _ip, _port = config['connection.details']['ip_address'], config['connection.details']['port']
+        print(f"IP and Port set to: {_ip}:{_port}")
     else:
         username = os.getlogin()
+        print("No IP or Port set!")
     running = True
     while running:
         print(f"\nCurrently using username: {username}\n")
-        print(f"IP and Port set to: {_ip}:{_port}" if _ip and _port else "No IP and Port set!")
 
         match choice.Menu(choices, title="Action menu:").ask():
             # !!! There is redundant code regarding IP and Port parsing from config.

@@ -1,4 +1,5 @@
 import json
+import os
 import socket
 import asyncio
 import logging
@@ -6,6 +7,8 @@ import configparser
 import base64
 import hashlib
 from typing import Final
+import choice
+import fernet
 
 BUFSIZE: Final[int] = 4096
 
@@ -27,16 +30,26 @@ class Client:
     async def receive(self, decode: bool = True) -> bytes | str:
         message = await loop.sock_recv(self.sock, BUFSIZE)
         return message.decode() if decode else message
-    
+
     async def send(self, message):
-        message = message if type(message) == bytes else message.encode()
+        message = message if isinstance(message, bytes) else message.encode()
         await loop.sock_sendall(self.sock, message)
+
+
+async def check_password(client_password, real_password):
+    logger.info("Checking password provided...")
+    if client_password == hashlib.sha256(real_password.encode()).hexdigest():
+        return "200"
+    return "401"
+
+
 # Make it async
 async def handle_client(client: Client):
     # Is already returned decoded!!
     data = await client.receive()
     client_info = json.loads(data)
-    print(client_info)
+    await client.send(await check_password(client_info["key_hash"], password))
+    logger.info("Sent response!")
 
 
 async def await_connections(server: socket.socket):
@@ -75,6 +88,16 @@ def setup(ip: str, port: int, mode="nogui") -> socket.socket:
 
 if __name__ == "__main__":
     config = configparser.ConfigParser()
+    config_file = "sconfig.cfg"
+    config.read(config_file)
+    if os.path.isfile(config_file) and "security" in config.sections():
+        password = config["security"]['password']
+    else:
+        password = choice.Input("Enter the password for the server clients (20 char max)").ask()[:20]
+        config["security"] = {'password': password}
+        with open(config_file, "w") as f:
+            config.write(f)
+
     loop = asyncio.new_event_loop()
     server: socket.socket = setup("127.0.0.1", 7754)
     loop.run_until_complete(await_connections(server))

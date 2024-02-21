@@ -6,6 +6,7 @@ import configparser
 from typing import Final
 import hashlib
 import json
+import fernet
 
 BUFSIZE: Final[int] = 4096
 
@@ -19,26 +20,40 @@ logger.addHandler(ch)
 class User:
     username: str
     sock: socket.socket
+    key: fernet.Fernet
 
     def __init__(self, _socket, _username=os.getlogin(), password_hash=None):
         self.sock = _socket
         self.username = _username
 
+    @staticmethod
+    def code2string(code: int) -> str:
+        match int(code):
+            case 200:
+                return "Success!"
+            case 401:
+                return "Access denied!"
+            case 500:
+                return "Server error!"
+
     def __pre_login(self):
         client_data = {"username": self.username,
-                       "key_hash": hashlib.sha256(choice.Input("Enter the password for the server connection (max 20 char)").ask().encode()).hexdigest()}
+                       "key_hash": hashlib.sha256(choice.Input(
+                           "Enter the password for the server connection (20 char max)").ask()[
+                                                  :20].encode()).hexdigest()}
 
         self.send(json.dumps(client_data).encode())
+        result = self.receive()
+        print(self.code2string(result))
 
     def receive(self, decode: bool = True):
         message = None
-        while message == None:
-            self.sock.recv(BUFSIZE)
+        while message is None:
+            message = self.sock.recv(BUFSIZE)
         return message.decode() if decode else message
-    
+
     def send(self, message):
-        print(type(message))
-        message = message if type(message) == bytes else message.encode()
+        message = message if isinstance(message, bytes) else message.encode()
         self.sock.sendall(message)
 
     def handle_login(self):
@@ -74,15 +89,19 @@ if __name__ == "__main__":
     config.read(config_file)
     if os.path.isfile(config_file) and "user" in config.sections():
         username = config['user']['username']
+        _ip, _port = config['connection.details']['ip_address'], config['connection.details']['port']
     else:
         username = os.getlogin()
-    ip, port = None, None
-    while ip is None and port is None:
+    running = True
+    while running:
         print(f"\nCurrently using username: {username}\n")
+        print(f"IP and Port set to: {_ip}:{_port}" if _ip and _port else "No IP and Port set!")
 
         match choice.Menu(choices, title="Action menu:").ask():
+            # !!! There is redundant code regarding IP and Port parsing from config.
             case "Connect to server":
                 ip, port = pre_connect(config, config_file)
+                running = False
 
             case "Change username":
                 username = choice.Input("New username (limit 12 char)").ask()[:12].replace(" ", "_")
